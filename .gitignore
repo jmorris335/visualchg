@@ -1,0 +1,11 @@
+# yeomen generated
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+
+# setup
+*quickstart.md
+dev/
+.vscode/
