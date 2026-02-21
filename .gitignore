@@ -11,3 +11,5 @@ dev/
 .vscode/
 
 .DS_Store
+.claude/
+.venv/

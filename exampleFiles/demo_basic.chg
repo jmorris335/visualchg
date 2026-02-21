@@ -23,7 +23,8 @@
         "is_constant": false
       },
       {
-        "label": "E"
+        "label": "E",
+        "is_constant": false
       },
       {
         "label": "F",
@@ -33,7 +34,7 @@
     "edges": [
       {
         "label": "edge1",
-        "rel": "    def sum(a, b):\n        return a + b\n",
+        "rel": "def sum(a, b):\n    return a * b\n",
         "source_nodes": {
           "a": "A",
           "b": "B"
@@ -43,7 +44,7 @@
       },
       {
         "label": "edge2",
-        "rel": "    def negate(a):\n        return -a\n",
+        "rel": "def negate(a):\n    return -a\n",
         "source_nodes": {
           "a": "A"
         },
@@ -52,16 +53,16 @@
       },
       {
         "label": "edge3",
-        "rel": "    def negate(a):\n        return -a\n",
+        "rel": "def negate(a):\n    return -a\n",
         "source_nodes": {
           "a": "B"
         },
         "target": "E",
-        "weight": 23
+        "weight": 26
       },
       {
         "label": "edge4",
-        "rel": "    def sum(a, b):\n        return a + b\n",
+        "rel": "def sum(a, b):\n    return a + b\n",
         "source_nodes": {
           "a": "D",
           "b": "E"
@@ -71,23 +72,17 @@
       },
       {
         "label": "edge5",
-        "rel": "    def negate(a):\n        return -a\n",
+        "rel": "def negate(a):\n    return -a\n",
         "source_nodes": {
           "a": "F"
         },
         "target": "C",
-        "weight": 1
+        "weight": 100
       }
     ]
   },
   "frames": {
     "frame0": {
-      "C": [
-        10
-      ],
-      "F": [
-        -10
-      ],
       "D": [
         -3
       ],
@@ -96,6 +91,9 @@
       ],
       "E": [
         -7
+      ],
+      "F": [
+        -991
       ]
     },
     "frame1": {

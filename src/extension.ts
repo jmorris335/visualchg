@@ -1,10 +1,26 @@
 import * as vscode from 'vscode';
+import * as cp from 'child_process';
 import { ChgOutlineProvider } from './chgOutlineProvider';
 import { ChgState } from './chgState';
 import { ChgOperationsProvider } from './chgOperationsProvider';
 import { ChgDetailsProvider } from './chgDetailsProvider';
 import { ChgEditorProvider } from './chgEditorProvider';
 import { ChgViewProvider } from './chgViewProvider';
+
+// undefined = detection still in progress; null = not found; string = executable path
+let pythonPath: string | null | undefined = undefined;
+
+(async function detectPython() {
+    for (const candidate of ['python3', 'python']) {
+        const found = await new Promise<boolean>(resolve => {
+            const p = cp.spawn(candidate, ['--version'], { shell: false, stdio: 'ignore' });
+            p.on('close', code => resolve(code === 0));
+            p.on('error', () => resolve(false));
+        });
+        if (found) { pythonPath = candidate; return; }
+    }
+    pythonPath = null;
+})();
 
 export function activate(context: vscode.ExtensionContext) {
     const state = new ChgState();
@@ -128,7 +144,12 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'chgOperationsView',
-            new ChgOperationsProvider(getActiveChgUri, state)
+            new ChgOperationsProvider(
+                getActiveChgUri,
+                state,
+                () => pythonPath,
+                vscode.Uri.joinPath(context.extensionUri, 'src', 'simulate_chg.py').fsPath
+            )
         ),
         vscode.window.registerWebviewViewProvider(
             'chgDetailsView',

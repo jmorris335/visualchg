@@ -2,6 +2,11 @@ import * as vscode from 'vscode';
 import { ChgState } from './chgState';
 import { ChgNode, ChgEdge } from './chgOutlineProvider';
 
+function coerceValue(str: string): string | number {
+    const num = Number(str);
+    return isNaN(num) ? str : num;
+}
+
 function esc(v: unknown): string {
     return String(v ?? '')
         .replace(/&/g, '&amp;')
@@ -131,6 +136,20 @@ export class ChgDetailsProvider implements vscode.WebviewViewProvider {
   .check-row { display: flex; align-items: center; gap: 6px; }
   .check-row label { margin: 0; color: var(--vscode-foreground); font-size: var(--vscode-font-size); }
   .frame-hint { font-size: 0.85em; opacity: 0.7; }
+  .src-keys-section { display: flex; align-items: stretch; margin-bottom: 8px; gap: 6px; }
+  .src-keys-rotated {
+    writing-mode: vertical-lr; transform: rotate(180deg);
+    font-size: 0.85em; color: var(--vscode-descriptionForeground);
+    white-space: nowrap; align-self: center;
+  }
+  .src-keys-grid { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .src-key-cell { width: calc(50% - 3px); box-sizing: border-box; }
+  .src-key-node { display: block; font-size: 0.85em; color: var(--vscode-descriptionForeground);
+    margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  input.key-error {
+    border-color: var(--vscode-inputValidation-errorBorder, #f44) !important;
+    color: var(--vscode-inputValidation-errorForeground, #f44);
+  }
 </style>
 </head>
 <body>
@@ -144,6 +163,26 @@ ${body}
       vscode.postMessage({ command: 'update', field, value });
     });
   });
+
+  function validateSourceKeys() {
+    const inputs = Array.from(document.querySelectorAll('[data-field^="source-key:"]'));
+    const counts = {};
+    for (const el of inputs) {
+      const v = el.value.trim();
+      if (v) { counts[v] = (counts[v] || 0) + 1; }
+    }
+    for (const el of inputs) {
+      const v = el.value.trim();
+      const isDup = v && counts[v] > 1;
+      el.classList.toggle('key-error', isDup);
+      el.title = isDup ? 'Duplicate key \u2014 each source must have a unique key' : '';
+    }
+  }
+
+  document.querySelectorAll('[data-field^="source-key:"]').forEach(el => {
+    el.addEventListener('input', validateSourceKeys);
+  });
+  validateSourceKeys();
 </script>
 </body>
 </html>`;
@@ -188,6 +227,15 @@ ${body}
 <div class="row"><label>Sources (comma-separated)</label>
   <input type="text" data-field="sources" value="${esc(sourcesVal)}" list="node-list">
 </div>
+${edge.sources.length > 0 ? `<div class="src-keys-section">
+  <span class="src-keys-rotated">Keys</span>
+  <div class="src-keys-grid">
+    ${edge.sources.map(s => `<div class="src-key-cell">
+      <span class="src-key-node">${esc(s.label)}</span>
+      <input type="text" data-field="source-key:${esc(s.handle)}" value="${esc(s.handle)}">
+    </div>`).join('')}
+  </div>
+</div>` : ''}
 <div class="row"><label>Target</label>
   <input type="text" data-field="target" value="${esc(edge.target)}" list="node-list">
 </div>
@@ -252,7 +300,7 @@ ${body}
             const str = String(value);
             if (isConst) {
                 // Constant: persist directly in the node object (static_value).
-                if (str === '') { delete node.value; } else { node.value = str; }
+                if (str === '') { delete node.value; } else { node.value = coerceValue(str); }
             } else {
                 // Non-constant: persist in the current frame.
                 const currentFrame = this.state.currentFrame;
@@ -262,7 +310,7 @@ ${body}
                     if (str === '') {
                         delete raw.frames[currentFrame][nodeLabel];
                     } else {
-                        raw.frames[currentFrame][nodeLabel] = [str];
+                        raw.frames[currentFrame][nodeLabel] = [coerceValue(str)];
                     }
                 }
             }
@@ -307,6 +355,17 @@ ${body}
         if (field === 'label') {
             edge.label = String(value);
             this.state.setSelection('EDGE', String(value));
+        } else if (field.startsWith('source-key:')) {
+            const oldHandle = field.slice('source-key:'.length);
+            const newHandle = String(value).trim();
+            if (!newHandle || newHandle === oldHandle) { return; }
+            // Rename the key in the source_nodes object (object-keyed format).
+            if (edge.source_nodes && typeof edge.source_nodes === 'object' && !Array.isArray(edge.source_nodes)) {
+                if (edge.source_nodes[oldHandle] !== undefined) {
+                    edge.source_nodes[newHandle] = edge.source_nodes[oldHandle];
+                    delete edge.source_nodes[oldHandle];
+                }
+            }
         } else if (field === 'weight') {
             const num = parseFloat(String(value));
             if (isNaN(num)) { delete edge.weight; } else { edge.weight = num; }
@@ -318,8 +377,31 @@ ${body}
                     vscode.window.showWarningMessage(`Node "${part}" is not found in the hypergraph.`);
                 }
             }
-            edge.source_nodes = parts;
-            edge.sources = parts;
+            // Preserve object format (keyed source_nodes) when it already exists.
+            if (edge.source_nodes && typeof edge.source_nodes === 'object' && !Array.isArray(edge.source_nodes)) {
+                const oldSn: Record<string, string> = edge.source_nodes;
+                // Reverse map: node label → existing key
+                const labelToKey: Record<string, string> = {};
+                for (const [k, v] of Object.entries(oldSn)) { labelToKey[v as string] = k; }
+                const newSn: Record<string, string> = {};
+                for (const part of parts) {
+                    if (labelToKey[part]) {
+                        newSn[labelToKey[part]] = part; // reuse existing key
+                    } else {
+                        // Assign a new key: use node label (lower) or fall back to sN
+                        let key = part.toLowerCase();
+                        if (newSn[key] !== undefined) {
+                            let i = 1;
+                            while (newSn[`s${i}`] !== undefined) { i++; }
+                            key = `s${i}`;
+                        }
+                        newSn[key] = part;
+                    }
+                }
+                edge.source_nodes = newSn;
+            } else {
+                edge.source_nodes = parts;
+            }
         } else if (field === 'target') {
             const target = String(value);
             if (target !== '') {
