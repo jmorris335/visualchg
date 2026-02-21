@@ -1,23 +1,82 @@
 {
   "name": "visualchg",
-  "displayName": "VisualCHg",
+  "displayName": "VisualCHG",
   "description": "A visual editor of constraint hypergraphs",
   "version": "0.0.1",
+  "publisher": "John Morris",
+  "license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jmorris335/visualchg"
+	},
   "engines": {
     "vscode": "^1.109.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:chg",
+    "workspaceContains:**/*.chg"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
+    "customEditors": [
       {
-        "command": "visualchg.helloWorld",
-        "title": "Hello World"
+        "viewType": "visualchg.chgEditor",
+        "displayName": "CHG Visual Editor",
+        "selector": [
+          { "filenamePattern": "*.chg" }
+        ],
+        "priority": "default"
       }
-    ]
+    ],
+    "languages": [
+      {
+        "id": "chg",
+        "aliases": ["Constraint Hypergraph", "chg"],
+        "extensions": [".chg"]
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chg-primary",
+          "title": "VisualCHG",
+          "icon": "media/drop-icon.svg"
+        },
+        {
+          "id": "chg-outline",
+          "title": "CHG Outline",
+          "icon": "media/outline.svg"
+        }
+      ]
+    },
+    "views": {
+      "chg-primary": [
+        {
+          "id": "chgOperationsView",
+          "name": "Operations",
+          "type": "webview"
+        },
+        {
+          "id": "chgDetailsView",
+          "name": "Details",
+          "type": "webview"
+        },
+        {
+          "id": "chgViewPanel",
+          "name": "View",
+          "type": "webview"
+        }
+      ],
+      "chg-outline": [
+        {
+          "id": "chgOutlineView",
+          "name": "Outline"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

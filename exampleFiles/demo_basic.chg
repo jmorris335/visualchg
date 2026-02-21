@@ -1,69 +1,113 @@
 {
-    "chg_name": "demo_basic",
+  "hypergraph": {
+    "name": "null",
+    "no_weights": false,
+    "memory_mode": true,
     "nodes": [
-        {
-            "label": "A"
-        },
-        {
-            "label": "B"        
-        },
-        {
-            "label": "C"
-        },
-        {
-            "label": "D"
-        },
-        {
-            "label": "E"
-        }
+      {
+        "label": "A",
+        "is_constant": false,
+        "value": 3
+      },
+      {
+        "label": "B",
+        "is_constant": false,
+        "value": 7
+      },
+      {
+        "label": "C",
+        "is_constant": false
+      },
+      {
+        "label": "D",
+        "is_constant": false
+      },
+      {
+        "label": "E"
+      },
+      {
+        "label": "F",
+        "is_constant": false
+      }
     ],
     "edges": [
-        {
-            "label": "AB->C",
-            "source_nodes": ["A", "B"],
-            "target": "C",
-            "rel": "R.sum"
+      {
+        "label": "edge1",
+        "rel": "    def sum(a, b):\n        return a + b\n",
+        "source_nodes": {
+          "a": "A",
+          "b": "B"
         },
-        {
-            "label": "A->D",
-            "source_nodes": ["A"],
-            "target": "D",
-            "rel": "R.negate"
+        "target": "C",
+        "weight": 1
+      },
+      {
+        "label": "edge2",
+        "rel": "    def negate(a):\n        return -a\n",
+        "source_nodes": {
+          "a": "A"
         },
-        {
-            "label": "B->E",
-            "source_nodes": ["B"],
-            "target": "E",
-            "rel": "R.negate"
+        "target": "D",
+        "weight": 1
+      },
+      {
+        "label": "edge3",
+        "rel": "    def negate(a):\n        return -a\n",
+        "source_nodes": {
+          "a": "B"
         },
-        {
-            "label": "D->E",
-            "source_nodes": ["D", "E"],
-            "target": "E",
-            "rel": "R.sum"
+        "target": "E",
+        "weight": 23
+      },
+      {
+        "label": "edge4",
+        "rel": "    def sum(a, b):\n        return a + b\n",
+        "source_nodes": {
+          "a": "D",
+          "b": "E"
         },
-        {
-            "label": "F->C",
-            "source_nodes": ["F"],
-            "target": "C",
-            "rel": "R.negate"
-        }
-    ],
-    "frames": [
-        {
-            "chg_name": "demo_basic",
-            "inputs": {
-                "A": 3,
-                "E": -7
-            }
+        "target": "F",
+        "weight": 1
+      },
+      {
+        "label": "edge5",
+        "rel": "    def negate(a):\n        return -a\n",
+        "source_nodes": {
+          "a": "F"
         },
-        {
-            "chg_name": "demo_basic",
-            "inputs": {
-                "A": 3,
-                "B": 7
-            }
-        }
+        "target": "C",
+        "weight": 1
+      }
     ]
-
+  },
+  "frames": {
+    "frame0": {
+      "C": [
+        10
+      ],
+      "F": [
+        -10
+      ],
+      "D": [
+        -3
+      ],
+      "A": [
+        3
+      ],
+      "E": [
+        -7
+      ]
+    },
+    "frame1": {
+      "C": [
+        10
+      ],
+      "A": [
+        3
+      ],
+      "B": [
+        7
+      ]
+    }
+  }
 }

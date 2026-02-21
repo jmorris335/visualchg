@@ -1,0 +1,40 @@
+/* ── Page layout ──────────────────────────────────────────────────────────── */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--vscode-editor-background);
+}
+
+#cy {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Graph color palette ──────────────────────────────────────────────────────
+   These custom properties are the single source of truth for graph colors.
+   Each falls back to a VS Code theme token, then to a hard-coded default.
+
+   To use fixed colors instead of theme-adaptive ones, replace the
+   var(--vscode-...) expression with a hex value, e.g.:
+       --chg-node-fill: #4a90d9;
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Text color for node/edge labels */
+  --chg-fg:         var(--vscode-foreground,                    #cccccc);
+
+  /* Fill color for CHG nodes (ellipses) */
+  --chg-node-fill:  var(--vscode-button-background,             #0e639c);
+
+  /* Fill color for CHG hyperedge nodes (rounded rectangles) */
+  --chg-edge-fill:  var(--vscode-activityBarBadge-background,   #c97f47);
+
+  /* Border/highlight color for the selected element */
+  --chg-sel-color:  var(--vscode-focusBorder,                   #007fd4);
+
+  /* Color for bipartite connection lines and arrows */
+  --chg-conn-color: var(--vscode-widget-border,                 #555555);
+}

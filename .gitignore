@@ -9,3 +9,5 @@ node_modules
 *quickstart.md
 dev/
 .vscode/
+
+.DS_Store
