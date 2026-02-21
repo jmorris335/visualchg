@@ -99,8 +99,11 @@ export function activate(context: vscode.ExtensionContext) {
         if (kind === 'NODE' && data) {
             const node = data.nodes.find(n => n.label === label);
             if (node) {
-                const val = (node.value !== undefined && node.value !== null && node.value !== '')
-                    ? ` = ${node.value}${node.units ? ' ' + node.units : ''}`
+                let rawVal: unknown = (node.value !== undefined && node.value !== null && node.value !== '')
+                    ? node.value
+                    : data.frames[state.currentFrame ?? '']?.[node.label]?.[0];
+                const val = (rawVal !== undefined && rawVal !== null && rawVal !== '')
+                    ? ` = ${rawVal}${node.units ? ' ' + node.units : ''}`
                     : '';
                 statusBar.text = `${node.label}${val}`;
                 statusBar.tooltip = `Node: ${node.label}${val}`;
@@ -123,6 +126,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         state.onSelectionChange(() => updateStatusBar()),
         state.onDataChange(() => updateStatusBar()),
+        state.onFrameChange(() => updateStatusBar()),
     );
 
     // ── Initial load ─────────────────────────────────────────────────────────

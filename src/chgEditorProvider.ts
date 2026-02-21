@@ -237,6 +237,11 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
     else if (kind === 'EDGE') { applyFocusedEdge(label); }
   }
 
+  // ── Hot-reload styles on VS Code theme change ────────────────────────────────
+  new MutationObserver(() => cy.style(buildCyStyle())).observe(
+    document.body, { attributes: true, attributeFilter: ['class', 'style'] }
+  );
+
   // ── Click handlers ────────────────────────────────────────────────────────────
   cy.on('tap', 'node', evt => {
     const n = evt.target;

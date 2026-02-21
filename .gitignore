@@ -13,3 +13,6 @@ dev/
 .DS_Store
 .claude/
 .venv/
+*.log
+*/test/*.chg
+*/test/*.py
