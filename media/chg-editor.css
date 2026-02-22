@@ -37,4 +37,49 @@ html, body {
 
   /* Color for bipartite connection lines and arrows */
   --chg-conn-color: var(--vscode-widget-border,                 #555555);
+
+  /* Highlight color for the simulated path */
+  --chg-sim-color:  var(--vscode-testing-iconPassed,            #ffcc00);
+}
+
+/* ── Simulation info box ──────────────────────────────────────────────────── */
+
+#sim-info {
+  display: none;
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  padding: 8px 12px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--chg-sim-color);
+  border-left: 3px solid var(--chg-sim-color);
+  border-radius: 3px;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  line-height: 1.6;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Simulation SVG leader-line overlay ───────────────────────────────────── */
+
+#sim-svg {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+#sim-leader-line {
+  stroke: var(--chg-sim-color);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  stroke-opacity: 0.6;
+  fill: none;
 }

@@ -4,6 +4,10 @@ VisualCHG is a extension for visually editing and simulating constraint hypergra
 
 ## Features
 
+- Visual plotting of constraint hypergraphs
+- Easy editing and reading
+- Execute simulations from a GUI
+
 Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
 
 For example if there is an image subfolder under your extension project workspace:
@@ -14,7 +18,26 @@ For example if there is an image subfolder under your extension project workspac
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+The editor works off of a `.chg` file: a static JSON representation of a constraint hypergraph. To launch the extension, either open an existing `.chg` file or create a new one.
+
+**Simulation**
+All managing and editing of the hypergraph can be done via the extension. However, the simulation featuers require the [ConstraintHg](https://constrainthg.readthedocs.io/en/latest/) package. To do simulation, you'll need to setup a valid Python instance. The best way to do this is by creating a virtual environment, such as the following:
+
+MacOS/Linux:
+```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    pip install constrainthg
+```
+
+Windows:
+```shell
+    python3 -m venv .venv
+    .venv\Scripts\activate
+    pip install constrainthg
+```
+
+You can also use the VS Code command "Python: Create Environment," just make sure to install ConstraintHg afterwards.
 
 ## Extension Settings
 
@@ -37,21 +60,7 @@ Users appreciate release notes as you update your extension.
 
 ### 1.0.0
 
-Initial release of ...
+Initial release of VisualCHG.
 
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+## Authoring Information
 

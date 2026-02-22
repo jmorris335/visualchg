@@ -19,6 +19,7 @@ function buildCyStyle() { // eslint-disable-line no-unused-vars
   const edgeFill  = cssVar('--chg-edge-fill')  || '#c97f47';
   const selColor  = cssVar('--chg-sel-color')  || '#007fd4';
   const connColor = cssVar('--chg-conn-color') || '#555555';
+  const simColor  = cssVar('--chg-sim-color')  || '#ffcc00';
 
   return [
 
@@ -107,6 +108,26 @@ function buildCyStyle() { // eslint-disable-line no-unused-vars
         'label':              'data(label)',
         'opacity':            1,
         'background-opacity': 0.9,
+      },
+    },
+
+    // ── Simulated path highlight ─────────────────────────────────────────────
+    {
+      selector: 'node.sim-path',
+      style: {
+        'border-width':   4,
+        'border-color':   simColor,
+        'border-opacity': 1,
+        'opacity':        1,
+      },
+    },
+    {
+      selector: 'edge.sim-path',
+      style: {
+        'line-color':         simColor,
+        'target-arrow-color': simColor,
+        'opacity':            1,
+        'width':              2.5,
       },
     },
 

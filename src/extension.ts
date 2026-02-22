@@ -4,6 +4,7 @@ import { ChgOutlineProvider } from './chgOutlineProvider';
 import { ChgState } from './chgState';
 import { ChgOperationsProvider } from './chgOperationsProvider';
 import { ChgDetailsProvider } from './chgDetailsProvider';
+import { ChgSimulateProvider } from './chgSimulateProvider';
 import { ChgEditorProvider } from './chgEditorProvider';
 import { ChgViewProvider } from './chgViewProvider';
 
@@ -148,16 +149,20 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
             'chgOperationsView',
-            new ChgOperationsProvider(
+            new ChgOperationsProvider(getActiveChgUri, state)
+        ),
+        vscode.window.registerWebviewViewProvider(
+            'chgDetailsView',
+            new ChgDetailsProvider(state, getActiveChgUri)
+        ),
+        vscode.window.registerWebviewViewProvider(
+            'chgSimulateView',
+            new ChgSimulateProvider(
                 getActiveChgUri,
                 state,
                 () => pythonPath,
                 vscode.Uri.joinPath(context.extensionUri, 'src', 'simulate_chg.py').fsPath
             )
-        ),
-        vscode.window.registerWebviewViewProvider(
-            'chgDetailsView',
-            new ChgDetailsProvider(state, getActiveChgUri)
         ),
         vscode.window.registerWebviewViewProvider('chgViewPanel', new ChgViewProvider(state)),
     );

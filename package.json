@@ -65,6 +65,11 @@
           "type": "webview"
         },
         {
+          "id": "chgSimulateView",
+          "name": "Simulate",
+          "type": "webview"
+        },
+        {
           "id": "chgViewPanel",
           "name": "View",
           "type": "webview"

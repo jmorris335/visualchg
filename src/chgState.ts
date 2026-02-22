@@ -3,6 +3,15 @@ import { ChgData } from './chgOutlineProvider';
 
 export type SelectedKind = 'NODE' | 'EDGE' | 'PATH' | null;
 
+export type SimPath = {
+    targetNode: string;
+    nodes: string[];
+    edges: string[];
+    cost: number;
+    numEdges: number;
+    numNodes: number;
+} | null;
+
 export class ChgState {
     private _kind: SelectedKind = null;
     private _label: string | null = null;
@@ -22,11 +31,16 @@ export class ChgState {
     private readonly _onFrameChange = new vscode.EventEmitter<string | null>();
     readonly onFrameChange = this._onFrameChange.event;
 
+    private _simPath: SimPath = null;
+    private readonly _onSimPathChange = new vscode.EventEmitter<SimPath>();
+    readonly onSimPathChange = this._onSimPathChange.event;
+
     get kind(): SelectedKind { return this._kind; }
     get label(): string | null { return this._label; }
     get data(): ChgData | null { return this._data; }
     get layout(): string { return this._layout; }
     get currentFrame(): string | null { return this._currentFrame; }
+    get simPath(): SimPath { return this._simPath; }
 
     setSelection(kind: SelectedKind, label: string | null): void {
         this._kind = kind;
@@ -56,6 +70,11 @@ export class ChgState {
     setCurrentFrame(frame: string | null): void {
         this._currentFrame = frame;
         this._onFrameChange.fire(frame);
+    }
+
+    setSimPath(path: SimPath): void {
+        this._simPath = path;
+        this._onSimPathChange.fire(path);
     }
 
     clearSelection(): void {

@@ -47,13 +47,31 @@ def make_hypergraph(json_data: dict) -> Hypergraph:
     return hg
 
 
+def get_path_info(t) -> dict:
+    """Extracts path nodes and edges from a TNode simulation result."""
+    descendants = t.get_descendents()
+    path_nodes = set()
+    path_edges = set()
+    for tn in descendants:
+        path_nodes.add(tn.node_label)
+        if tn.gen_edge_label:
+            # gen_edge_label is 'edge_label#search_counter'; strip the counter suffix.
+            path_edges.add(tn.gen_edge_label.rsplit('#', 1)[0])
+    return {
+        'path_nodes': list(path_nodes),
+        'path_edges': list(path_edges),
+        'num_nodes': len(path_nodes),
+        'num_edges': len(path_edges),
+    }
+
+
 def simulate(file_path: str, output_node: str, frame_key: str, **kwargs):
     """Simulates a hypergraph for the specified output_node."""
     with open(file_path, 'r') as f:
         json_data = json.load(f)
     hg = make_hypergraph(json_data)
     inputs = get_inputs(json_data, frame_key)
-    
+
     t = hg.solve(output_node, inputs=inputs, **kwargs)
     return t
 
@@ -68,15 +86,31 @@ if __name__ == '__main__':
     frame_key = sys.argv[3] if len(sys.argv) > 3 else ''
     to_print = sys.argv[4].lower() != 'false' if len(sys.argv) > 4 else True
     min_index = int(sys.argv[5]) if len(sys.argv) > 5 else 0
+    logging_level = int(sys.argv[6]) if len(sys.argv) > 6 else 0
+    debug_nodes = [n for n in sys.argv[7].split(',') if n] if len(sys.argv) > 7 else []
+    debug_edges = [e for e in sys.argv[8].split(',') if e] if len(sys.argv) > 8 else []
+
+    solve_kwargs: dict = dict(to_print=to_print, min_index=min_index,
+                              debug_nodes=debug_nodes, debug_edges=debug_edges)
+    if logging_level > 0:
+        solve_kwargs['logging_level'] = logging_level
 
     try:
-        t = simulate(file_path, output_node, frame_key, to_print=to_print, min_index=min_index)
+        t = simulate(file_path, output_node, frame_key, **solve_kwargs)
     except Exception as e:
         print(json.dumps({'error': str(e)}))
         sys.exit(1)
 
     if t is not None:
-        print(json.dumps({'msg': str(t), 'value': t.value, 'cost': t.cost, 'tree': t.get_tree()}))
+        path_info = get_path_info(t)
+        print(json.dumps({
+            'msg': str(t),
+            'value': t.value,
+            'cost': t.cost,
+            'tree': t.get_tree(),
+            'target_node': output_node,
+            **path_info,
+        }))
     else:
         print(json.dumps({'error': 'No solution found'}))
         sys.exit(1)

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ChgState } from './chgState';
+import { ChgState, SimPath } from './chgState';
 import { parseChgData } from './chgOutlineProvider';
 
 function getNonce(): string {
@@ -48,6 +48,14 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
             webviewPanel.webview.postMessage({ type: 'setLayout', layout });
         };
 
+        const postSimPath = (path: SimPath) => {
+            if (path) {
+                webviewPanel.webview.postMessage({ type: 'setSimPath', path });
+            } else {
+                webviewPanel.webview.postMessage({ type: 'clearSimPath' });
+            }
+        };
+
         const subs = [
             vscode.workspace.onDidChangeTextDocument(e => {
                 if (e.document.uri.toString() === document.uri.toString()) {
@@ -56,6 +64,7 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
             }),
             this.state.onSelectionChange(() => postSelection()),
             this.state.onLayoutChange(layout => postLayout(layout)),
+            this.state.onSimPathChange(path => postSimPath(path)),
         ];
 
         webviewPanel.webview.onDidReceiveMessage(msg => {
@@ -64,6 +73,7 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
                     postData();
                     postSelection();
                     postLayout(this.state.layout);
+                    if (this.state.simPath) { postSimPath(this.state.simPath); }
                     break;
                 case 'select':
                     vscode.commands.executeCommand('setContext', 'visualchg.selectedKind', msg.kind);
@@ -99,6 +109,10 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
 </head>
 <body>
 <div id="cy"></div>
+<div id="sim-info"></div>
+<svg id="sim-svg" xmlns="http://www.w3.org/2000/svg">
+  <line id="sim-leader-line" x1="0" y1="0" x2="0" y2="0"></line>
+</svg>
 <script src="${graphStyleUri}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script nonce="${nonce}">
@@ -112,6 +126,7 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
   let selectedKind = null;
   let selectedLabel = null;
   let lastLayout = 'grid';
+  let currentSimPath = null;
 
   // ── Cytoscape ────────────────────────────────────────────────────────────────
   const cy = cytoscape({
@@ -237,6 +252,77 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
     else if (kind === 'EDGE') { applyFocusedEdge(label); }
   }
 
+  // ── Simulation path highlighting ──────────────────────────────────────────
+
+  const simInfo   = document.getElementById('sim-info');
+  const simSvg    = document.getElementById('sim-svg');
+  const simLeader = document.getElementById('sim-leader-line');
+
+  function updateSimLeader() {
+    if (!currentSimPath) { return; }
+    const targetEl = cy.getElementById('n:' + currentSimPath.targetNode);
+    if (targetEl.empty()) { return; }
+
+    const pos      = targetEl.renderedPosition();
+    const infoRect = simInfo.getBoundingClientRect();
+
+    // Anchor the leader to the bottom-left corner of the info box.
+    const x1 = infoRect.left;
+    const y1 = infoRect.bottom;
+    const x2 = pos.x;
+    const y2 = pos.y;
+
+    simLeader.setAttribute('x1', x1);
+    simLeader.setAttribute('y1', y1);
+    simLeader.setAttribute('x2', x2);
+    simLeader.setAttribute('y2', y2);
+  }
+
+  function applySimPath(path) {
+    currentSimPath = path;
+
+    // Highlight matching nodes and edges with the sim-path class.
+    cy.elements().removeClass('sim-path');
+    for (const nodeLabel of (path.nodes || [])) {
+      cy.getElementById('n:' + nodeLabel).addClass('sim-path');
+    }
+    for (const edgeLabel of (path.edges || [])) {
+      cy.getElementById('e:' + edgeLabel).addClass('sim-path');
+    }
+    // Highlight arrows whose both endpoints are already in the sim path.
+    cy.edges().forEach(e => {
+      if (e.source().hasClass('sim-path') && e.target().hasClass('sim-path')) {
+        e.addClass('sim-path');
+      }
+    });
+
+    // Populate and show the info box.
+    simInfo.textContent = '';
+    const lines = [
+      'Cost: ' + (typeof path.cost === 'number' ? path.cost.toPrecision(4) : path.cost),
+      'Edges: ' + path.numEdges,
+      'Nodes: ' + path.numNodes,
+    ];
+    for (const line of lines) {
+      const div = document.createElement('div');
+      div.textContent = line;
+      simInfo.appendChild(div);
+    }
+    simInfo.style.display = 'block';
+    simSvg.style.display  = 'block';
+
+    updateSimLeader();
+  }
+
+  function clearSimPath() {
+    currentSimPath = null;
+    cy.elements().removeClass('sim-path');
+    simInfo.style.display = 'none';
+    simSvg.style.display  = 'none';
+  }
+
+  cy.on('viewport layoutstop', updateSimLeader);
+
   // ── Hot-reload styles on VS Code theme change ────────────────────────────────
   new MutationObserver(() => cy.style(buildCyStyle())).observe(
     document.body, { attributes: true, attributeFilter: ['class', 'style'] }
@@ -262,12 +348,18 @@ export class ChgEditorProvider implements vscode.CustomTextEditorProvider {
       currentData = msg.data;
       cy.elements().remove();
       if (currentData) { cy.add(buildElements(currentData)); }
+      // Re-apply sim path after rebuilding elements (classes are wiped by the remove/add).
+      if (currentSimPath) { applySimPath(currentSimPath); }
       applySelection(selectedKind, selectedLabel);
     } else if (msg.type === 'setSelection') {
       applySelection(msg.kind, msg.label);
     } else if (msg.type === 'setLayout') {
       lastLayout = msg.layout || 'grid';
       applyDisplayMode();
+    } else if (msg.type === 'setSimPath') {
+      applySimPath(msg.path);
+    } else if (msg.type === 'clearSimPath') {
+      clearSimPath();
     }
   });
 
